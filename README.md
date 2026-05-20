@@ -1,18 +1,72 @@
-## Getting Started
+# Registro de Mascotas - Clínica Veterinaria
 
-Welcome to the VS Code Java world. Here is a guideline to help you get started to write Java code in Visual Studio Code.
+Aplicación de escritorio en Java para gestionar el registro de mascotas en una clínica veterinaria. Permite añadir, buscar, importar y exportar datos de mascotas vinculadas al DNI de su propietario.
 
-## Folder Structure
+## Funcionalidades
 
-The workspace contains two folders by default, where:
+- **Añadir mascota**: registra una nueva mascota con nombre, especie, propietario, DNI y edad.
+- **Buscar mascota**: consulta todas las mascotas asociadas a un DNI.
+- **Exportar a .txt**: guarda los resultados de una búsqueda en un archivo de texto.
+- **Importar desde .txt**: carga los datos de una mascota desde un archivo de texto.
 
-- `src`: the folder to maintain sources
-- `lib`: the folder to maintain dependencies
+## Tecnologías
 
-Meanwhile, the compiled output files will be generated in the `bin` folder by default.
+- Java (Swing para la interfaz gráfica)
+- MySQL (base de datos local)
+- MySQL Connector/J 9.7.0
 
-> If you want to customize the folder structure, open `.vscode/settings.json` and update the related settings there.
+## Estructura del proyecto
 
-## Dependency Management
+```
+vet-clinica/
+├── src/
+│   ├── App.java          # Punto de entrada
+│   ├── Window.java       # Interfaz gráfica principal
+│   ├── Pet.java          # Modelo de mascota
+│   └── DBConection.java  # Conexión y operaciones con la BD
+├── lib/
+│   └── mysql-connector-j-9.7.0.jar
+└── bin/                  # Archivos compilados
+```
 
-The `JAVA PROJECTS` view allows you to manage your dependencies. More details can be found [here](https://github.com/microsoft/vscode-java-dependency#manage-dependencies).
+## Requisitos previos
+
+- JDK 11 o superior
+- MySQL corriendo en `localhost:3306`
+- Base de datos `clinicaVet` con una tabla `mascotas`:
+
+```sql
+CREATE DATABASE clinicaVet;
+
+USE clinicaVet;
+
+CREATE TABLE mascotas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100),
+    especie VARCHAR(100),
+    propietario VARCHAR(100),
+    dni VARCHAR(20),
+    edad INT
+);
+```
+
+## Configuración de la base de datos
+
+Las credenciales están definidas en `src/DBConection.java`:
+
+```java
+URL:      jdbc:mysql://localhost:3306/clinicaVet
+Usuario:  root
+Password: abcd1234
+```
+
+Modifícalas si tu entorno tiene configuración distinta.
+
+## Ejecución
+
+Compila y ejecuta desde VS Code con la extensión **Extension Pack for Java**, o desde la terminal:
+
+```bash
+javac -cp lib/mysql-connector-j-9.7.0.jar -d bin src/*.java
+java -cp bin;lib/mysql-connector-j-9.7.0.jar App
+```
