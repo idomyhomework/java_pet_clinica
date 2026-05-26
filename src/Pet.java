@@ -5,6 +5,18 @@ public class Pet {
     private String dni;
     private int edad;
 
+    private int id;
+
+    public Pet(int id, String nombre, String especie, String propietario, String dni, int edad) {
+        this.id = id;
+        this.nombre = nombre;
+        this.especie = especie;
+        this.propietario = propietario;
+        this.dni = dni;
+        this.edad = edad;
+
+    }
+
     public Pet(String nombre, String especie, String propietario, String dni, int edad) {
         this.nombre = nombre;
         this.especie = especie;
@@ -31,6 +43,10 @@ public class Pet {
 
     public int getEdad() {
         return edad;
+    }
+
+    public int getId() {
+        return id;
     }
 
 }

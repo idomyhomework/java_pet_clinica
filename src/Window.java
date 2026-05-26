@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.List;
 
 public class Window extends JFrame {
     private JTextField nombre = new JTextField(20);
@@ -93,12 +94,14 @@ public class Window extends JFrame {
         searchPanel.add(searchBtnPanel);
 
         // --- Área de resultados ---
-        JTextArea searchResult = new JTextArea(10, 30);
-        searchResult.setEditable(false);
+        JPanel petsListPanel = new JPanel();
+        petsListPanel.setLayout(new BoxLayout(petsListPanel, BoxLayout.Y_AXIS));
+        JScrollPane scrollPane = new JScrollPane(petsListPanel);
+        scrollPane.setPreferredSize(new Dimension(400, 200));
 
         bottomPanel.add(searchPanel, BorderLayout.NORTH);
-        bottomPanel.add(new JScrollPane(searchResult), BorderLayout.CENTER);
-        add(bottomPanel, BorderLayout.CENTER); // CENTER en vez de SOUTH para que se expanda
+        bottomPanel.add(scrollPane, BorderLayout.CENTER);
+        add(bottomPanel, BorderLayout.CENTER);
         add(bottomPanel, BorderLayout.SOUTH);
         panel.add(new JLabel(""), gbc);
         pack();
@@ -106,12 +109,11 @@ public class Window extends JFrame {
         setVisible(true);
 
         // --- Listeners ---
-        clearBtn.addActionListener(e -> borrarTexto(searchResult));
+        clearBtn.addActionListener(e -> petsListPanel.removeAll());
         createBtn.addActionListener(e -> createPet());
         searchBtn.addActionListener(e -> {
-            String dni = searchDni.getText();
-            String result = searchPet(dni);
-            searchResult.setText(result);
+            List<Pet> pets = db.searchPetList(searchDni.getText());
+            mostrarMascotas(pets, petsListPanel, searchDni.getText());
         });
     }
 
@@ -150,15 +152,97 @@ public class Window extends JFrame {
         }
     }
 
-    private String searchPet(String dni) {
-        if (dni.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Por favor, ingrese un DNI.", "Error", JOptionPane.ERROR_MESSAGE);
-            return "";
+    private void mostrarMascotas(List<Pet> pets, JPanel petsListPanel, String dni) {
+        petsListPanel.removeAll();
+        if (pets.isEmpty()) {
+            petsListPanel.add(new JLabel("No se encontraron mascotas con el DNI: " + dni));
         }
-        String search = "";
-        search = db.searchPet(dni);
+        for (Pet pet : pets) {
+            JPanel card = new JPanel(new BorderLayout());
+            card.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createEmptyBorder(4, 4, 4, 4),
+                    BorderFactory.createLineBorder(Color.GRAY)));
 
-        return search;
+            JLabel info = new JLabel("<html><b>" + pet.getNombre() + "</b> · " +
+                    pet.getEspecie() + " · " + pet.getPropietario() + " · " + pet.getEdad() + " años</html>");
+            info.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
+
+            JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 4, 4));
+            JButton editBtn = new JButton("Editar");
+            JButton deleteBtn = new JButton("Eliminar");
+
+            editBtn.addActionListener(e -> abrirEditModal(pet, petsListPanel, dni));
+            deleteBtn.addActionListener(e -> {
+                int confirm = JOptionPane.showConfirmDialog(this,
+                        "¿Seguro que quieres eliminar a " + pet.getNombre() + "?",
+                        "Confirmar eliminación", JOptionPane.YES_NO_OPTION);
+                if (confirm == JOptionPane.YES_OPTION) {
+                    db.deletePet(pet.getId());
+                    mostrarMascotas(db.searchPetList(dni), petsListPanel, dni);
+                }
+            });
+
+            btnPanel.add(editBtn);
+            btnPanel.add(deleteBtn);
+            card.add(info, BorderLayout.CENTER);
+            card.add(btnPanel, BorderLayout.EAST);
+            petsListPanel.add(card);
+        }
+        petsListPanel.revalidate();
+        petsListPanel.repaint();
+    }
+
+    private void abrirEditModal(Pet pet, JPanel petsListPanel, String dni) {
+        JDialog dialog = new JDialog(this, "Editar mascota", true);
+        dialog.setLayout(new GridBagLayout());
+        dialog.setMinimumSize(new Dimension(300, 250));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+
+        JTextField fNombre = new JTextField(pet.getNombre(), 15);
+        JTextField fEspecie = new JTextField(pet.getEspecie(), 15);
+        JTextField fPropietario = new JTextField(pet.getPropietario(), 15);
+        JTextField fDni = new JTextField(pet.getDni(), 15);
+        JTextField fEdad = new JTextField(String.valueOf(pet.getEdad()), 15);
+
+        String[] editLabels = { "Nombre:", "Especie:", "Propietario:", "DNI:", "Edad:" };
+        JTextField[] editFields = { fNombre, fEspecie, fPropietario, fDni, fEdad };
+
+        for (int i = 0; i < editLabels.length; i++) {
+            gbc.gridx = 0;
+            gbc.gridy = i;
+            gbc.anchor = GridBagConstraints.EAST;
+            dialog.add(new JLabel(editLabels[i]), gbc);
+            gbc.gridx = 1;
+            gbc.anchor = GridBagConstraints.WEST;
+            dialog.add(editFields[i], gbc);
+        }
+
+        JButton saveBtn = new JButton("Guardar");
+        saveBtn.addActionListener(e -> {
+            try {
+                int nuevaEdad = Integer.parseInt(fEdad.getText());
+                Pet updated = new Pet(pet.getId(), fNombre.getText(), fEspecie.getText(),
+                        fPropietario.getText(), fDni.getText(), nuevaEdad);
+                db.updatePet(updated);
+                dialog.dispose();
+                mostrarMascotas(db.searchPetList(dni), petsListPanel, dni);
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(dialog, "La edad debe ser un número.", "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        gbc.gridx = 0;
+        gbc.gridy = editLabels.length;
+        gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.CENTER;
+        dialog.add(saveBtn, gbc);
+
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
     }
 
     private void exportarMascota(String dni) {
@@ -225,9 +309,5 @@ public class Window extends JFrame {
                 System.out.println("Error al cerrar el fichero: " + e.getMessage());
             }
         }
-    }
-
-    private void borrarTexto(JTextArea field) {
-        field.setText("");
     }
 }

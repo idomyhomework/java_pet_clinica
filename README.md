@@ -8,6 +8,9 @@ Aplicación de escritorio en Java para gestionar el registro de mascotas en una 
 - **Buscar mascota**: consulta todas las mascotas asociadas a un DNI.
 - **Exportar a .txt**: guarda los resultados de una búsqueda en un archivo de texto.
 - **Importar desde .txt**: carga los datos de una mascota desde un archivo de texto.
+- **Editar mascora**: para ver esta función primero tienes que tener al menos una mascota en la base.
+  Busca a la masota por el DNI del propietario, abre nueva ventana en la cual puedes editar los datos.
+- **Eliminar mascota**: Elimna a una mascota de la base de datos.
 
 ## Tecnologías
 
@@ -33,7 +36,7 @@ vet-clinica/
 
 - JDK 11 o superior
 - MySQL corriendo en `localhost:3306`
-- Base de datos `clinicaVet` con una tabla `mascotas`:
+- Base de datos `clinicavet` con una tabla `mascotas`:
 
 ```sql
 CREATE DATABASE clinicaVet;
